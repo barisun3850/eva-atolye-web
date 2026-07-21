@@ -4,7 +4,7 @@ import { db } from "./firebase";
 import {
   Scissors, ClipboardList, Package, Settings, Plus, Search, X,
   ClipboardList as ClipboardIcon, Layers, Tag, CheckCircle2, AlertTriangle, Phone, User,
-  Car, Palette, Trash2, ChevronRight, Loader2, Save, Minus, Eye
+  Car, Palette, Trash2, ChevronRight, Loader2, Save, Minus, Eye, TrendingUp
 } from "lucide-react";
 
 const FONT_IMPORT = `
@@ -564,6 +564,74 @@ function SettingsPanel({ prices, onSave }) {
   );
 }
 
+const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const startOfWeek = (d) => { const x = startOfDay(d); const day = (x.getDay() + 6) % 7; x.setDate(x.getDate() - day); return x; };
+const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
+
+function CiroPanel({ orders }) {
+  const delivered = orders.filter((o) => o.durum === "teslim" && o.teslimTarihi);
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const weekStart = startOfWeek(now);
+  const monthStart = startOfMonth(now);
+
+  const inRange = (start) => delivered.filter((o) => new Date(o.teslimTarihi) >= start);
+  const gunluk = inRange(todayStart);
+  const haftalik = inRange(weekStart);
+  const aylik = inRange(monthStart);
+  const sum = (list) => list.reduce((s, o) => s + o.fiyat, 0);
+
+  const recentDelivered = [...delivered]
+    .sort((a, b) => new Date(b.teslimTarihi) - new Date(a.teslimTarihi))
+    .slice(0, 20);
+
+  const StatCard = ({ label, list }) => (
+    <div className="rounded-lg p-5" style={{ background: "#FFFFFF", border: "1px solid #DCE1E7" }}>
+      <div className="text-[11px] font-bold tracking-widest mb-2" style={{ fontFamily: "'Oswald', sans-serif", color: "#8A93A0" }}>{label}</div>
+      <div className="text-[26px] font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: "#14213D" }}>
+        {sum(list).toLocaleString("tr-TR")} ₺
+      </div>
+      <div className="text-[12px] mt-1" style={{ color: "#9CA3AF" }}>{list.length} sipariş</div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="grid sm:grid-cols-3 gap-3 mb-5">
+        <StatCard label="BUGÜN" list={gunluk} />
+        <StatCard label="BU HAFTA" list={haftalik} />
+        <StatCard label="BU AY" list={aylik} />
+      </div>
+
+      <div className="text-[11px] font-bold tracking-widest mb-2" style={{ fontFamily: "'Oswald', sans-serif", color: "#8A93A0" }}>SON TESLİMLER</div>
+      {recentDelivered.length === 0 ? (
+        <div className="text-center py-16 rounded-lg" style={{ background: "#FFF", border: "1px dashed #DCE1E7", color: "#9CA3AF" }}>
+          <TrendingUp size={28} className="mx-auto mb-2" />
+          <div className="text-[14px] font-medium">Henüz teslim edilmiş sipariş yok</div>
+        </div>
+      ) : (
+        <div className="rounded-lg overflow-hidden" style={{ background: "#FFF", border: "1px solid #DCE1E7" }}>
+          {recentDelivered.map((o, i) => (
+            <div key={o.id} className="flex items-center justify-between px-4 py-2.5" style={{ borderTop: i > 0 ? "1px solid #F1F2F4" : "none" }}>
+              <div className="min-w-0">
+                <div className="text-[13px] font-semibold truncate" style={{ color: "#14213D" }}>
+                  {o.musteri} <span style={{ color: "#9CA3AF", fontWeight: 500 }}>· {o.arac}</span>
+                </div>
+                <div className="text-[11px]" style={{ color: "#9CA3AF", fontFamily: "'JetBrains Mono', monospace" }}>
+                  {new Date(o.teslimTarihi).toLocaleDateString("tr-TR")} {new Date(o.teslimTarihi).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })} · {o.kod}
+                </div>
+              </div>
+              <div className="text-[14px] font-bold flex-shrink-0 ml-3" style={{ fontFamily: "'JetBrains Mono', monospace", color: "#2F7D5C" }}>
+                {o.fiyat.toLocaleString("tr-TR")} ₺
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const { ready, orders, stock, prices, error, setError, persistOrders, persistStock, persistPrices } = useStorage();
   const [tab, setTab] = useState("yeni");
@@ -584,7 +652,10 @@ export default function App() {
       if (o.id !== id) return o;
       const idx = STATUSES.findIndex((s) => s.id === o.durum);
       const nextStatus = STATUSES[idx + 1];
-      return nextStatus ? { ...o, durum: nextStatus.id } : o;
+      if (!nextStatus) return o;
+      const updated = { ...o, durum: nextStatus.id };
+      if (nextStatus.id === "teslim") updated.teslimTarihi = new Date().toISOString();
+      return updated;
     });
     persistOrders(next);
   };
@@ -605,6 +676,7 @@ export default function App() {
   const tabs = [
     { id: "yeni", label: "Yeni Sipariş", icon: Plus },
     { id: "siparisler", label: "Siparişler", icon: ClipboardList },
+    { id: "ciro", label: "Ciro", icon: TrendingUp },
     { id: "stok", label: "Stok", icon: Package },
     { id: "ayarlar", label: "Fiyat Listesi", icon: Settings },
   ];
@@ -687,6 +759,8 @@ export default function App() {
             )}
           </div>
         )}
+
+        {tab === "ciro" && <CiroPanel orders={orders} />}
 
         {tab === "stok" && <StockPanel stock={stock} onUpdate={persistStock} />}
 
