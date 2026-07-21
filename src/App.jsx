@@ -161,6 +161,70 @@ function useStorage() {
 }
 
 
+function MatLogo({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <rect x="3" y="4" width="18" height="16" rx="3" fill="#E8590C" />
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" fill="none" stroke="#B8450F" strokeWidth="1" opacity="0.5" />
+      <circle cx="8" cy="9" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="12" cy="9" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="16" cy="9" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="8" cy="13" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="12" cy="13" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="16" cy="13" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="8" cy="17" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="12" cy="17" r="1.1" fill="#B8450F" opacity="0.55" />
+      <circle cx="16" cy="17" r="1.1" fill="#B8450F" opacity="0.55" />
+    </svg>
+  );
+}
+
+function LoginScreen({ onLogin }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const checkPassword = () => {
+    const entry = Object.entries(AUTH_PASSWORDS).find(([, pass]) => pass === password);
+    if (entry) {
+      onLogin(entry[0]);
+    } else {
+      setError("Şifre hatalı, tekrar dene.");
+    }
+  };
+
+  return (
+    <div className="w-full min-h-screen flex items-center justify-center px-4" style={{ background: "#EEF1F4", fontFamily: "'Inter', sans-serif" }}>
+      <style>{FONT_IMPORT}</style>
+      <div className="rounded-lg p-8 w-full max-w-sm" style={{ background: "#FFFFFF", border: "1px solid #DCE1E7" }}>
+        <div className="flex items-center justify-center mb-3">
+          <MatLogo size={30} />
+        </div>
+        <div className="text-xl font-bold text-center mb-1" style={{ fontFamily: "'Oswald', sans-serif", color: "#14213D" }}>
+          BARIŞ EVA ATÖLYE
+        </div>
+        <div className="text-[12px] text-center mb-6" style={{ color: "#8A93A0" }}>Devam etmek için şifreni gir</div>
+        <div className="relative mb-3">
+          <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#9CA3AF" }} />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); setError(""); }}
+            onKeyDown={(e) => { if (e.key === "Enter") checkPassword(); }}
+            placeholder="Şifre"
+            autoFocus
+            className="w-full rounded-md pl-9 pr-3 py-2.5 text-[14px] outline-none"
+            style={{ border: "1px solid #DCE1E7", color: "#14213D" }}
+          />
+        </div>
+        {error && <div className="text-[12px] mb-3" style={{ color: "#B91C1C" }}>{error}</div>}
+        <button type="button" onClick={checkPassword} className="w-full rounded-md py-2.5 font-semibold text-[14px] text-white" style={{ background: "#14213D" }}>
+          Giriş Yap
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function StatusBadge({ statusId, small }) {
   const s = STATUSES.find((x) => x.id === statusId) || STATUSES[0];
   const Icon = s.icon;
