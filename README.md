@@ -23,36 +23,6 @@ sipariş yönetim uygulaması.
    açabilirsin. Firebase Firestore sayesinde tüm cihazlar aynı veriyi görür ve
    bir cihazda yapılan değişiklik anında diğerlerinde de görünür.
 
-## AI Fotoğraf Önizleme (Gemini API) — opsiyonel, ücretli
-
-Yeni Sipariş ekranındaki "Fotoğraf Önizleme Oluştur (AI)" butonu, seçtiğin renklere göre
-gerçekçi bir görsel üretir (Google'ın Gemini 2.5 Flash Image / "Nano Banana" modeliyle).
-Marka ismi doğrudan görsele yazdırılmıyor, "o markaya benzer sınıfta bir araç" olarak
-tarif ediliyor — logo/marka sorunu yaşamamak için.
-
-**Maliyet:** Google'ın güncel fiyatlandırmasına göre görsel başına yaklaşık $0.02–$0.04
-arası (ayrıntı için ai.google.dev/gemini-api/docs/pricing sayfasına bak, fiyatlar
-zamanla değişebilir). Buton her tıklandığında bir görsel üretilir, otomatik/arka planda
-çalışmaz — yani maliyeti sen kontrol edersin.
-
-**Kurulum:**
-
-1. **aistudio.google.com** adresine git, Google hesabınla giriş yap.
-2. Sol menüden veya ana sayfadan **"Get API key"** / **"API anahtarı al"** butonuna tıkla.
-3. **"Create API key"** de, yeni bir proje oluşturmasına izin ver.
-4. Ücretsiz kotanın ötesinde (günlük birkaç yüz istek) kullanmak için, açılan projede
-   **billing (faturalandırma)** hesabı bağlaman gerekebilir: console.cloud.google.com →
-   ilgili proje → "Billing" → kredi kartı ekle. Küçük bir atölye için aylık maliyet
-   genelde birkaç dolar seviyesindedir (kaç görsel ürettiğine bağlı).
-5. Oluşan API anahtarını kopyala.
-6. **Vercel Dashboard**'da projene git → **Settings → Environment Variables**.
-7. Key: `GEMINI_API_KEY`, Value: (kopyaladığın anahtar) — **"Add"** de.
-8. Sağ üstten **"Redeploy"** yap (env değişkeni eklemek otomatik yeniden deploy tetiklemez,
-   elle bir kez redeploy etmen gerekir).
-
-Bu adımları atlarsan sorun değil — buton "GEMINI_API_KEY tanımlı değil" hatası verir,
-uygulamanın geri kalanı (stilize SVG önizleme dahil) etkilenmeden çalışmaya devam eder.
-
 ## Firestore güvenlik kuralları (önemli)
 
 Firestore'u "test mode" ile açtıysan, bu mod **30 gün sonra otomatik olarak
