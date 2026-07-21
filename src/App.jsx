@@ -4,7 +4,7 @@ import { db } from "./firebase";
 import {
   Scissors, ClipboardList, Package, Settings, Plus, Search, X,
   ClipboardList as ClipboardIcon, Layers, Tag, CheckCircle2, AlertTriangle, Phone, User,
-  Car, Palette, Trash2, ChevronRight, Loader2, Save, Minus, Eye, TrendingUp
+  Car, Palette, Trash2, ChevronRight, Loader2, Save, Minus, Eye, TrendingUp, Camera
 } from "lucide-react";
 
 const FONT_IMPORT = `
@@ -195,6 +195,29 @@ function MatPreview({ marka, model, yil, tabanRengi, kenarRengi, carRengi, topuk
   const carHex = colorHex(carRengi);
   const arac = [marka, model, yil].filter(Boolean).join(" ");
 
+  const [photo, setPhoto] = useState(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
+
+  const generatePhoto = async () => {
+    setPhotoLoading(true);
+    setPhotoError(null);
+    try {
+      const res = await fetch("/api/generate-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ marka, model, tabanRengi, kenarRengi, carRengi, topuklu, logoAdet }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Görsel üretilemedi");
+      setPhoto(`data:${data.mimeType};base64,${data.image}`);
+    } catch (e) {
+      setPhotoError(e.message);
+    } finally {
+      setPhotoLoading(false);
+    }
+  };
+
   return (
     <div className="rounded-lg p-5" style={{ background: "#FFFFFF", border: "1px solid #DCE1E7", position: "sticky", top: 16 }}>
       <div className="text-[11px] font-bold tracking-widest mb-3 flex items-center gap-2" style={{ fontFamily: "'Oswald', sans-serif", color: "#8A93A0" }}>
@@ -208,18 +231,38 @@ function MatPreview({ marka, model, yil, tabanRengi, kenarRengi, carRengi, topuk
         </span>
       </div>
 
-      <svg viewBox="0 0 300 190" className="w-full rounded-md" style={{ background: "#F3F5F7" }}>
-        <path d="M22,28 L118,28 L108,88 L18,94 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
-        <path d="M182,28 L278,28 L282,94 L192,88 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
-        <path d="M28,104 L112,98 L108,158 L38,158 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
-        <path d="M188,98 L272,104 L262,158 L192,158 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
-        {logoAdet > 0 && (
-          <>
-            <circle cx="70" cy="58" r="6" fill="#FFFFFF" opacity="0.85" />
-            <circle cx="230" cy="58" r="6" fill="#FFFFFF" opacity="0.85" />
-          </>
-        )}
-      </svg>
+      {photo ? (
+        <img src={photo} alt="AI önizleme" className="w-full rounded-md" style={{ background: "#F3F5F7" }} />
+      ) : (
+        <svg viewBox="0 0 300 190" className="w-full rounded-md" style={{ background: "#F3F5F7" }}>
+          <path d="M22,28 L118,28 L108,88 L18,94 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
+          <path d="M182,28 L278,28 L282,94 L192,88 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
+          <path d="M28,104 L112,98 L108,158 L38,158 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
+          <path d="M188,98 L272,104 L262,158 L192,158 Z" fill={tabanHex} stroke={kenarHex} strokeWidth="7" strokeLinejoin="round" />
+          {logoAdet > 0 && (
+            <>
+              <circle cx="70" cy="58" r="6" fill="#FFFFFF" opacity="0.85" />
+              <circle cx="230" cy="58" r="6" fill="#FFFFFF" opacity="0.85" />
+            </>
+          )}
+        </svg>
+      )}
+
+      <button
+        onClick={generatePhoto}
+        disabled={photoLoading}
+        className="w-full mt-3 flex items-center justify-center gap-2 rounded-md py-2 text-[13px] font-semibold transition-opacity disabled:opacity-50"
+        style={{ background: "#F1F2F4", color: "#14213D" }}
+      >
+        {photoLoading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+        {photoLoading ? "Oluşturuluyor..." : photo ? "Yeniden Oluştur (AI)" : "Fotoğraf Önizleme Oluştur (AI)"}
+      </button>
+      {photoError && (
+        <div className="text-[11px] mt-1.5" style={{ color: "#B91C1C" }}>{photoError}</div>
+      )}
+      <div className="text-[10px] mt-2" style={{ color: "#B0B6BE" }}>
+        * AI görseli temsilidir, gerçek araca özel kalıp değildir. Her üretim küçük bir maliyet çıkarır.
+      </div>
 
       <div className="flex flex-wrap gap-1.5 mt-3">
         <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: "#F1F2F4", color: "#6B7280" }}>
